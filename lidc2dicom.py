@@ -1,14 +1,3 @@
-'''
-for p in subjects
-  for s in p.scans ## should be only 1
-    check geometric consistency
-    convert to volume
-    for n in p.nodules
-       paste n.mask into CT volume
-       save as a volume file in some place
-       save metadata (reader) into some dictionary
-    run itkimage2segimage for all nodules and reference the CT series
- '''
 from pathlib import Path
 
 def firstNonDot(list):
@@ -44,6 +33,7 @@ with open(colorsFile,'r') as f:
     colors.append([int(c) for c in l.split(' ')[2:5]])
 
 def cleanUpTempDir(dir):
+  shutil.rmtree(os.path.join(dir,"dicom2nrrd"))
   for p in Path(dir).glob("*.nrrd"):
     p.unlink()
 
@@ -73,7 +63,7 @@ def convertForSubject(subjectID):
     logger.warning("Geometry inconsistent for subject %s" % (s))
 
   tempSubjectDir = os.path.join(tempDir,s)
-  reconTempDir = os.path.join(tempSubjectDir,"dicom2nifti")
+  reconTempDir = os.path.join(tempSubjectDir,"dicom2nrrd")
   try:
     os.makedirs(reconTempDir)
   except:
@@ -106,40 +96,7 @@ def convertForSubject(subjectID):
   logger.info("Have %d annotations for subject %s" % (anns.count(), s))
 
 
-  '''
-  reorient = itk.OrientImageFilter[ImageType,ImageType].New()
-  reorient.SetInput(scanVolume)
-  reorient.SetDesiredCoordinateOrientation(lidc_helpers.ITK_COORDINATE_ORIENTATION_LSP)
-  reorient.Update();
-  scanVolume = reorient.GetOutput()
-  '''
-
   instanceCount = 0
-
-  '''
-  #save the re-oriented volume
-  scanNRRDFile = os.path.join(tempSubjectDir,s+'_pylidc_scan.nrrd')
-  if not os.exists(scanNRRDFile):
-    #this is how the array should be reordered to recover the orientation as expected
-    scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == s).first()
-
-    scanArray = scan.to_volume().astype(np.int16)
-    print("Array shape: "+str(scanArray.shape))
-    #scanArray = scanArray.reshape(scanArray.shape[::-1]).copy()
-    scanArray = np.swapaxes(scanArray,0,2).copy()
-    #print("Array shape reoriented: "+str(scanArray.shape))
-    scanArray = np.rollaxis(scanArray,2,1).copy()
-    scanVolume = itk.GetImageFromArray(scanArray)
-
-    scanVolume.SetSpacing(volume.GetSpacing())
-    scanVolume.SetOrigin(volume.GetOrigin())
-    print("Image shape: "+str(scanVolume.GetLargestPossibleRegion().GetSize()))
-    writerType = itk.ImageFileWriter[ImageType]
-    writer = writerType.New()
-    writer.SetFileName(scanNRRDFile)
-    writer.SetInput(scanVolume)
-    writer.Update()
-  '''
 
   scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == s).first()
   for nCount,nodule in enumerate(scan.cluster_annotations()):
