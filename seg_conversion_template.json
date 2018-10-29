@@ -1,0 +1,42 @@
+{
+  "ContentCreatorName": "Reader1",
+  "ClinicalTrialSeriesID": "Session1",
+  "ClinicalTrialTimePointID": "1",
+  "SeriesDescription": "Lung nodule segmentation",
+  "SeriesNumber": "300",
+  "InstanceNumber": "1",
+  "BodyPartExamined": "LUNG",
+  "segmentAttributes": [
+    [
+      {
+        "labelID": 1,
+        "SegmentAlgorithmType": "MANUAL",
+        "AnatomicRegionSequence": {
+          "CodeValue": "T-28000",
+          "CodingSchemeDesignator": "SRT",
+          "CodeMeaning": "Lung"
+        },
+        "SegmentedPropertyCategoryCodeSequence": {
+          "CodeValue": "M-01000",
+          "CodingSchemeDesignator": "SRT",
+          "CodeMeaning": "Morphological Abnormal Structure"
+        },
+        "SegmentedPropertyTypeCodeSequence": {
+          "CodeValue": "M-03010",
+          "CodingSchemeDesignator": "SRT",
+          "CodeMeaning": "Nodule"
+        },
+        "recommendedDisplayRGBValue": [
+          255,
+          255,
+          255
+        ],
+        "TrackingIdentifier": "TBD",
+        "TrackingUniqueIdentifier": "TBD"
+      }
+    ]
+  ],
+  "ContentLabel": "SEGMENTATION",
+  "ContentDescription": "Lung nodule segmentation",
+  "ClinicalTrialCoordinatingCenterName": "TCIA"
+}

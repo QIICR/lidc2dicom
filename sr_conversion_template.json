@@ -1,0 +1,41 @@
+{
+  "@schema": "https://raw.githubusercontent.com/qiicr/dcmqi/master/doc/schemas/sr-tid1500-schema.json#",
+
+  "SeriesDescription": "Qualitative evaluations",
+  "SeriesNumber": "1001",
+  "InstanceNumber": "1",
+
+  "compositeContext": [],
+
+  "imageLibrary": [],
+
+  "observerContext": {
+    "ObserverType": "PERSON",
+    "PersonObserverName": "Reader1"
+  },
+
+  "VerificationFlag": "VERIFIED",
+  "CompletionFlag": "COMPLETE",
+
+  "activitySession": "1",
+  "timePoint": "1",
+
+  "Measurements": [
+    {
+      "TrackingIdentifier": "Qualitative evaluations",
+      "ReferencedSegment": 1,
+      "SourceSeriesForImageSegmentation": "SRC_SERIES",
+      "segmentationSOPInstanceUID": "SEG_INSTANCE",
+      "Finding": {
+        "CodeValue": "M-03010",
+        "CodingSchemeDesignator": "SRT",
+        "CodeMeaning": "Nodule"
+      },
+      "FindingSite": {
+        "CodeValue": "T-28000",
+        "CodingSchemeDesignator": "SRT",
+        "CodeMeaning": "Lung"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+Missing cases:
+* 158 - due to wrong assumption about file naming; resolved
+* 238 - missing
+* 317 - ok
+* 405 - ok
+* 409 - ok
+* 412 - ok
+* 433 - ok
+* 510 - wrong dict value; fixed by ignoring
+* 585 - missing
+* 672 - geometry inconsistent; resolved by proceeding with the conversion
