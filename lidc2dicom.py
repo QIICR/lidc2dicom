@@ -41,9 +41,13 @@ def cleanUpTempDir(dir):
 def convertForSubject(subjectID):
   s = 'LIDC-IDRI-%04i' % subjectID
   logger.info("Processing subject %s" % (s))
-  studyUID = firstNonDot(os.listdir(os.path.join(rootDir,s)))
-  seriesUID = firstNonDot(os.listdir(os.path.join(rootDir,s,studyUID)))
-  seriesDir = os.path.join(rootDir,s,studyUID,seriesUID)
+  try:
+    studyUID = firstNonDot(os.listdir(os.path.join(rootDir,s)))
+    seriesUID = firstNonDot(os.listdir(os.path.join(rootDir,s,studyUID)))
+    seriesDir = os.path.join(rootDir,s,studyUID,seriesUID)
+  except FileNotFoundError:
+    logger.error("Files not found for subject "+s)
+    return
 
   dcmFiles = glob.glob(os.path.join(seriesDir,"*.dcm"))
   if not len(dcmFiles):
@@ -365,16 +369,18 @@ def main():
     logging.basicConfig(level=logging.INFO)
   logger = logging.getLogger("lidc2dicom")
 
-  if len(args.subjectIDs):
-    print(str(args.subjectIDs))
+  if args.subjectIDs:
+    logging.info("Processing subjects "+str(args.subjectIDs))
     for s in args.subjectIDs:
       convertForSubject(s)
   elif len(args.subjectRange):
+    logging.info("Processing subjects from "+str(args.subjectRange[0])+" to "+str(args.subjectRange[1])+" inclusive")
     if args.subjectRange[1]<args.subjectRange[0]:
       print("Invalid range.")
-    for s in range(args.subjectRange[0],args.subjectRange[1],1):
+    for s in range(args.subjectRange[0],args.subjectRange[1]+1,1):
       convertForSubject(s)
   elif args.allSubjects:
+    logging.info("Processing all subjects from 1 to 1012.")
     for s in range(1,1013,1):
       convertForSubject(s)
 
