@@ -10,42 +10,44 @@ import pylidc as pl
 def checkSubject(subjectID, show):
   s = 'LIDC-IDRI-%04i' % subjectID
   print("Checking subject "+s)
-  scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == s).first()
-  if scan is None:
+  scans = pl.query(pl.Scan).filter(pl.Scan.patient_id == s)
+  if not scans.count():
     print("%s not found!" % (s))
     return
-  nodules = scan.cluster_annotations()
-  annotations = pl.query(pl.Annotation).join(pl.Scan).filter(pl.Scan.patient_id == s)
-  print("%i nodules and %d annotations" % (len(nodules), annotations.count()))
-  annotationsInNodules = 0
-  annotationsInNodulesList = []
-  annotationsNotInNodulesList = []
-  for nCount,nodule in enumerate(nodules):
-    print("  Nodule %d has %d annotations" % (nCount+1, len(nodule)))
-    for a in nodule:
-      annotationsInNodulesList.append(a.id)
-  if len(annotationsInNodulesList) != annotations.count():
-    print("   WARNING: %d annotations unaccounted for!" % (annotations.count()-len(annotationsInNodulesList)))
-    allAnnotationsList = []
-    for a in annotations:
-      if a.id not in annotationsInNodulesList:
-        annotationsNotInNodulesList.append(a.id)
-        print("%d (%s) not assigned to a nodule" % (a.id, a._nodule_id))
-      else:
-        print("%d (%s) assigned to a nodule" % (a.id, a._nodule_id))
-  annotations2show = []
+  for scanNumber, scan in enumerate(scans):
+    print("Subject %s scan %d" % (s, scanNumber+1))
+    nodules = scan.cluster_annotations()
+    annotations = scan.annotations #pl.query(pl.Annotation).join(pl.Scan).filter(pl.Scan.patient_id == s)
+    print("%i nodules and %d annotations" % (len(nodules), len(annotations)))
+    annotationsInNodules = 0
+    annotationsInNodulesList = []
+    annotationsNotInNodulesList = []
+    for nCount,nodule in enumerate(nodules):
+      print("  Nodule %d has %d annotations" % (nCount+1, len(nodule)))
+      for a in nodule:
+        annotationsInNodulesList.append(a.id)
+    if len(annotationsInNodulesList) != len(annotations):
+      print("   WARNING: %d annotations unaccounted for!" % (annotations.count()-len(annotationsInNodulesList)))
+      allAnnotationsList = []
+      for a in annotations:
+        if a.id not in annotationsInNodulesList:
+          annotationsNotInNodulesList.append(a.id)
+          print("%d (%s) not assigned to a nodule" % (a.id, a._nodule_id))
+        else:
+          print("%d (%s) assigned to a nodule" % (a.id, a._nodule_id))
+    annotations2show = []
 
-  if show == 'all':
-    annotations2show = [[a] for a in annotations]
-  elif show == 'missing':
-    annotations2show = [[a] for a in annotations if a.id in annotationsNotInNodulesList]
-  elif show != None:
-    annotations2show = [[a] for a in annotations if a._nodule_id == show]
+    if show == 'all':
+      annotations2show = [[a] for a in annotations]
+    elif show == 'missing':
+      annotations2show = [[a] for a in annotations if a.id in annotationsNotInNodulesList]
+    elif show != None:
+      annotations2show = [[a] for a in annotations if a._nodule_id == show]
 
-  if show != None and len(annotations2show) == 0:
-    print("OOPS: Could not figure out what to show with the parameters given.")
-  if len(annotations2show) != 0:
-    scan.visualize(annotation_groups=annotations2show)
+    if show != None and len(annotations2show) == 0:
+      print("OOPS: Could not figure out what to show with the parameters given.")
+    if len(annotations2show) != 0:
+      scan.visualize(annotation_groups=annotations2show)
 
 def main():
   import argparse
