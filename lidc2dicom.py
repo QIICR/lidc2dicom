@@ -1,7 +1,7 @@
 from pathlib import Path
 import lidc_conversion_utils.helpers as lidc_helpers
-import os, itk, tempfile, json, pydicom, tempfile, shutil
-from subprocess import call
+import os, itk, tempfile, json, pydicom, tempfile, shutil, sys
+import subprocess
 import pylidc as pl
 import numpy as np
 import glob
@@ -79,7 +79,11 @@ class LIDC2DICOMConverter:
 
     converterCmd = [os.path.join(self.dcmqiRoot,'itkimage2segimage'), "--inputImageList", nrrdSegFile, "--inputDICOMDirectory", seriesDir, "--inputMetadata", jsonSegFile, "--outputDICOM", dcmSegFile]
     self.logger.info("Converting to DICOM SEG with "+str(converterCmd))
-    call(converterCmd)
+
+    sp = subprocess.Popen(converterCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = sp.communicate()
+    self.logger.info("itkimage2segimage stdout: "+stdout.decode('ascii'))
+    self.logger.warning("itkimage2segimage stderr: "+stderr.decode('ascii'))
 
     segUID = None
     ctSeriesUID = None
@@ -253,7 +257,11 @@ class LIDC2DICOMConverter:
     dcmSRFile = os.path.join(self.tempSubjectDir,srName+'.dcm')
     converterCmd = [os.path.join(self.dcmqiRoot,'tid1500writer'), "--inputMetadata", jsonSRFile, "--inputImageLibraryDirectory", seriesDir, "--inputCompositeContextDirectory", self.tempSubjectDir, "--outputDICOM", dcmSRFile]
     self.logger.info("Converting with "+str(converterCmd))
-    call(converterCmd)
+
+    sp = subprocess.Popen(converterCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = sp.communicate()
+    self.logger.info("tid1500writer stdout: "+stdout.decode('ascii'))
+    self.logger.warning("tid1500writer stderr: "+stderr.decode('ascii'))
 
     if not os.path.exists(dcmSRFile):
       self.logger.error("Failed to access output SR file for "+s)
@@ -302,7 +310,12 @@ class LIDC2DICOMConverter:
         # tempDir = tempfile.mkdtemp()
         plastimatchCmd = ['/Users/fedorov/build/plastimatch/plastimatch', 'convert','--input',seriesDir,'--output-img',scanNRRDFile]
         self.logger.info("Running plastimatch with "+str(plastimatchCmd))
-        call(plastimatchCmd)
+
+        sp = subprocess.Popen(plastimatchCmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        (stdout, stderr) = sp.communicate()
+        self.logger.info("plastimatch stdout: "+stdout.decode('ascii'))
+        self.logger.warning("plastimatch stderr: "+stderr.decode('ascii'))
+
         self.logger.info('plastimatch completed')
         self.logger.info("Conversion of CT volume OK - result in "+scanNRRDFile)
       else:
@@ -385,7 +398,13 @@ def main():
   args = parser.parse_args()
 
   if args.logFile:
+    root = logging.getLogger()
     logging.basicConfig(filename=args.logFile,level=logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
+    handler.setFormatter(formatter)
+    root.addHandler(handler)
   else:
     logging.basicConfig(level=logging.INFO)
   logger = logging.getLogger("lidc2dicom")
