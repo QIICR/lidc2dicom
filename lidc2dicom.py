@@ -1,11 +1,4 @@
 from pathlib import Path
-
-def firstNonDot(list):
-  for i in list:
-    if i[0]!='.':
-      return i
-  return None
-
 import lidc_conversion_utils.helpers as lidc_helpers
 import os, itk, tempfile, json, pydicom, tempfile, shutil
 from subprocess import call
@@ -13,6 +6,7 @@ import pylidc as pl
 import numpy as np
 import glob
 import logging
+from decimal import *
 
 class LIDC2DICOMConverter:
 
@@ -196,7 +190,7 @@ class LIDC2DICOMConverter:
     measurementItems = []
 
     volumeItem = {}
-    volumeItem["value"] = str(a.volume)
+    volumeItem["value"] = '%E' % Decimal(a.volume)
     volumeItem["quantity"] = {"CodeValue": "G-D705","CodingSchemeDesignator": "SRT","CodeMeaning": "Volume"}
     volumeItem["units"] = {"CodeValue": "mm3","CodingSchemeDesignator": "UCUM","CodeMeaning": "cubic millimeter"}
     volumeItem["measurementModifier"] = {"CodeValue": "122503","CodingSchemeDesignator": "DCM","CodeMeaning": "Integration of sum of closed areas on contiguous slices"}
@@ -204,14 +198,14 @@ class LIDC2DICOMConverter:
 
     # CID 7470
     diameterItem = {}
-    diameterItem["value"] = str(a.diameter)
+    diameterItem["value"] = '%E' % Decimal(a.diameter)
     diameterItem["quantity"] = {"CodeValue": "M-02550","CodingSchemeDesignator": "SRT","CodeMeaning": "Diameter"}
     diameterItem["units"] = {"CodeValue": "mm","CodingSchemeDesignator": "UCUM","CodeMeaning": "millimeter"}
     diameterItem["measurementAlgorithmIdentification"] = {"AlgorithmName": "pylidc","AlgorithmVersion": "0.2.0"}
 
     #
     surfaceItem = {}
-    surfaceItem["value"] = str(a.surface_area)
+    surfaceItem["value"] = '%E' % Decimal(a.surface_area)
     surfaceItem["quantity"] = {"CodeValue": "C0JK","CodingSchemeDesignator": "IBSI","CodeMeaning": "Surface area of mesh"}
     surfaceItem["units"] = {"CodeValue": "mm2","CodingSchemeDesignator": "UCUM","CodeMeaning": "square millimeter"}
     surfaceItem["measurementAlgorithmIdentification"] = {"AlgorithmName": "pylidc","AlgorithmVersion": "0.2.0"}
@@ -261,73 +255,89 @@ class LIDC2DICOMConverter:
   def convertForSubject(self, subjectID):
     s = 'LIDC-IDRI-%04i' % subjectID
     self.logger.info("Processing subject %s" % (s))
-    try:
-      studyUID = firstNonDot(os.listdir(os.path.join(self.rootDir,s)))
-      seriesUID = firstNonDot(os.listdir(os.path.join(self.rootDir,s,studyUID)))
+    scans = pl.query(pl.Scan).filter(pl.Scan.patient_id == s)
+    self.logger.info(" Found %d scans" % (scans.count()))
+
+    for scan in scans:
+      studyUID = scan.study_instance_uid
+      seriesUID = scan.series_instance_uid
       seriesDir = os.path.join(self.rootDir,s,studyUID,seriesUID)
-    except FileNotFoundError:
-      self.logger.error("Files not found for subject "+s)
-      return
+      if not os.path.exists(seriesDir):
+        self.logger.error("Files not found for subject "+s)
+        return
 
-    dcmFiles = glob.glob(os.path.join(seriesDir,"*.dcm"))
-    if not len(dcmFiles):
-      logger.error("No DICOM files found for subject "+s)
-      return
+      dcmFiles = glob.glob(os.path.join(seriesDir,"*.dcm"))
+      if not len(dcmFiles):
+        logger.error("No DICOM files found for subject "+s)
+        return
 
-    firstFile = os.path.join(seriesDir,dcmFiles[0])
+      firstFile = os.path.join(seriesDir,dcmFiles[0])
 
-    try:
-      ctDCM = pydicom.read_file(firstFile)
-    except:
-      logger.error("Failed to read input file "+firstFile)
-      return
+      try:
+        ctDCM = pydicom.read_file(firstFile)
+      except:
+        logger.error("Failed to read input file "+firstFile)
+        return
 
-    ok = lidc_helpers.checkSeriesGeometry(seriesDir)
-    if not ok:
-      self.logger.warning("Geometry inconsistent for subject %s" % (s))
+      ok = lidc_helpers.checkSeriesGeometry(seriesDir)
+      if not ok:
+        self.logger.warning("Geometry inconsistent for subject %s" % (s))
 
-    self.tempSubjectDir = os.path.join(self.tempDir,s)
-    reconTempDir = os.path.join(self.tempSubjectDir,"dicom2nrrd")
-    try:
-      os.makedirs(reconTempDir)
-    except:
-      pass
+      self.tempSubjectDir = os.path.join(self.tempDir,s)
+      reconTempDir = os.path.join(self.tempSubjectDir,"dicom2nrrd")
+      try:
+        os.makedirs(reconTempDir)
+      except:
+        pass
 
-    scanNRRDFile = os.path.join(self.tempSubjectDir,s+'_CT.nrrd')
-    if not os.path.exists(scanNRRDFile):
-      # convert
-      # tempDir = tempfile.mkdtemp()
-      plastimatchCmd = ['/Users/fedorov/build/plastimatch/plastimatch', 'convert','--input',seriesDir,'--output-img',scanNRRDFile]
-      self.logger.info("Running plastimatch with "+str(plastimatchCmd))
-      call(plastimatchCmd)
-      self.logger.info('plastimatch completed')
-      self.logger.info("Conversion of CT volume OK - result in "+scanNRRDFile)
-    else:
-      self.logger.info(scanNRRDFile+" exists. Not rerunning volume reconstruction.")
+      scanNRRDFile = os.path.join(self.tempSubjectDir,s+'_CT.nrrd')
+      if not os.path.exists(scanNRRDFile):
+        # convert
+        # tempDir = tempfile.mkdtemp()
+        plastimatchCmd = ['/Users/fedorov/build/plastimatch/plastimatch', 'convert','--input',seriesDir,'--output-img',scanNRRDFile]
+        self.logger.info("Running plastimatch with "+str(plastimatchCmd))
+        call(plastimatchCmd)
+        self.logger.info('plastimatch completed')
+        self.logger.info("Conversion of CT volume OK - result in "+scanNRRDFile)
+      else:
+        self.logger.info(scanNRRDFile+" exists. Not rerunning volume reconstruction.")
 
-    reader = itk.ImageFileReader[itk.Image[itk.SS, 3]].New()
-    reader.SetFileName(scanNRRDFile)
-    reader.Update()
-    volume = reader.GetOutput()
+      reader = itk.ImageFileReader[itk.Image[itk.SS, 3]].New()
+      reader.SetFileName(scanNRRDFile)
+      reader.Update()
+      volume = reader.GetOutput()
 
-    #logger.info(volume.GetLargestPossibleRegion().GetSize())
+      #logger.info(volume.GetLargestPossibleRegion().GetSize())
 
-    # now iterate over all nodules available for this subject
-    anns = pl.query(pl.Annotation).join(pl.Scan).filter(pl.Scan.patient_id == s)
-    self.logger.info("Have %d annotations for subject %s" % (anns.count(), s))
+      # now iterate over all nodules available for this subject
+      anns = scan.annotations
+      self.logger.info("Have %d annotations for subject %s" % (len(anns), s))
 
-    self.instanceCount = 0
+      self.instanceCount = 0
 
-    scan = pl.query(pl.Scan).filter(pl.Scan.patient_id == s).first()
-    for nCount,nodule in enumerate(scan.cluster_annotations()):
+      clusteredAnnotationIDs = []
 
-      noduleUID = pydicom.uid.generate_uid(prefix=None) # by default, pydicom uses 2.25 root
+      for nCount,nodule in enumerate(scan.cluster_annotations()):
 
-      for aCount,a in enumerate(nodule):
+        noduleUID = pydicom.uid.generate_uid(prefix=None) # by default, pydicom uses 2.25 root
 
-        self.convertSingleAnnotation(nCount, aCount, a, ctDCM, noduleUID, volume, seriesDir)
+        for aCount,a in enumerate(nodule):
 
-    self.cleanUpTempDir(self.tempSubjectDir)
+          clusteredAnnotationIDs.append(a.id)
+          self.convertSingleAnnotation(nCount, aCount, a, ctDCM, noduleUID, volume, seriesDir)
+
+
+      if len(clusteredAnnotationIDs) != len(anns):
+        self.logger.warning("%d annotations unaccounted for!" % (len(anns) - len(clusteredAnnotationIDs)))
+
+      for ua in anns:
+        if ua.id not in clusteredAnnotationIDs:
+          aCount = aCount+1
+          nCount = nCount+1
+          noduleUID = pydicom.uid.generate_uid(prefix=None)
+          self.convertSingleAnnotation(nCount, aCount, ua, ctDCM, noduleUID, volume, seriesDir)
+
+      self.cleanUpTempDir(self.tempSubjectDir)
 
 def main():
   import argparse
