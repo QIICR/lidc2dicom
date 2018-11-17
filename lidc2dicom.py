@@ -42,10 +42,11 @@ class LIDC2DICOMConverter:
     segJSON["segmentAttributes"][0][0]["SegmentDescription"] = segName
     segJSON["SeriesDescription"] = "Segmentation of "+segName
 
+    self.instanceCount = self.instanceCount+1
     if ctDCM.SeriesNumber != '':
-      segJSON["SeriesNumber"] = str(int(ctDCM.SeriesNumber)+self.instanceCount+1)
+      segJSON["SeriesNumber"] = str(int(ctDCM.SeriesNumber)+self.instanceCount)
     else:
-      segJSON["SeriesNumber"] = str(self.instanceCount+1)
+      segJSON["SeriesNumber"] = str(self.instanceCount)
 
     for ci in range(3):
         segJSON["segmentAttributes"][0][0]["recommendedDisplayRGBValue"][ci] = self.colors[aCount+1][ci]
@@ -87,8 +88,6 @@ class LIDC2DICOMConverter:
     except:
       self.logger.error("Failed to read Segmentation file")
       return
-
-    self.instanceCount = self.instanceCount+1
 
     # convert qualitative evaluations
     # TODO: DAC suggests it is better mix and match standard codes than use non-standard for all
@@ -182,6 +181,12 @@ class LIDC2DICOMConverter:
 
     srName = segName+" evaluations"
     srJSON["SeriesDescription"] = srName
+
+    self.instanceCount = self.instanceCount+1
+    if ctDCM.SeriesNumber != '':
+      srJSON["SeriesNumber"] = str(int(ctDCM.SeriesNumber)+self.instanceCount)
+    else:
+      srJSON["SeriesNumber"] = str(self.instanceCount)
 
     srJSON["compositeContext"] = [dcmSegFile.split('/')[-1]]
     srJSON["imageLibrary"] = os.listdir(seriesDir)
