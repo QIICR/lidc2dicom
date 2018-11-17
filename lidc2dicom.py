@@ -38,8 +38,10 @@ class LIDC2DICOMConverter:
       segJSON = json.load(f)
 
     # update as necessary!
+    noduleName = "Nodule "+str(nCount+1)
     segName = "Nodule "+str(nCount+1) +" - Annotation " + a._nodule_id
     segJSON["segmentAttributes"][0][0]["SegmentDescription"] = segName
+    segJSON["segmentAttributes"][0][0]["SegmentLabel"] = segName
     segJSON["SeriesDescription"] = "Segmentation of "+segName
 
     self.instanceCount = self.instanceCount+1
@@ -51,7 +53,7 @@ class LIDC2DICOMConverter:
     for ci in range(3):
         segJSON["segmentAttributes"][0][0]["recommendedDisplayRGBValue"][ci] = self.colors[aCount+1][ci]
 
-    segJSON["segmentAttributes"][0][0]["TrackingIdentifier"] = segName
+    segJSON["segmentAttributes"][0][0]["TrackingIdentifier"] = noduleName
     segJSON["segmentAttributes"][0][0]["TrackingUniqueIdentifier"] = noduleUID
 
     jsonSegFile = os.path.join(self.tempSubjectDir,segName+'.json')
@@ -182,6 +184,11 @@ class LIDC2DICOMConverter:
     srName = segName+" evaluations"
     srJSON["SeriesDescription"] = srName
 
+    # be explicit about reader being anonymous
+    srJSON["observerContext"] = {}
+    srJSON["observerContext"]["ObserverType"] = "PERSON"
+    srJSON["observerContext"]["PersonObserverName"] = "anonymous"
+
     self.instanceCount = self.instanceCount+1
     if ctDCM.SeriesNumber != '':
       srJSON["SeriesNumber"] = str(int(ctDCM.SeriesNumber)+self.instanceCount)
@@ -219,14 +226,8 @@ class LIDC2DICOMConverter:
     measurementItems.append(diameterItem)
     measurementItems.append(surfaceItem)
 
-    #      subtletyItem = {}
-    #      subtletyItem["conceptCode"] = conceptsDictionary['subtlety']
-    #      subtletyItem["conceptValue"] = valuesDictionary['subtlety'][str(a.subtlety)]
-    #      qualitativeEvaluations.append(subtletyItem)
-
     for attribute in conceptsDictionary.keys():
       # print(attribute+': '+str(getattr(a, attribute)))
-
       try:
         qItem = {}
         qItem["conceptCode"] = conceptsDictionary[attribute]
@@ -241,7 +242,7 @@ class LIDC2DICOMConverter:
     srJSON["Measurements"][0]["segmentationSOPInstanceUID"] = segUID
     srJSON["Measurements"][0]["SourceSeriesForImageSegmentation"] = ctSeriesUID
 
-    srJSON["Measurements"][0]["TrackingIdentifier"] = segName
+    srJSON["Measurements"][0]["TrackingIdentifier"] = noduleName
     srJSON["Measurements"][0]["TrackingUniqueIdentifier"] = noduleUID
 
     srName = "Nodule "+str(nCount+1) +" - Annotation " + a._nodule_id + " measurements"
