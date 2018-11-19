@@ -418,7 +418,7 @@ def main():
     logger.info("Processing subjects "+str(args.subjectIDs))
     for s in args.subjectIDs:
       converter.convertForSubject(s)
-  elif len(args.subjectRange):
+  elif args.subjectRange is not None and len(args.subjectRange):
     logger.info("Processing subjects from "+str(args.subjectRange[0])+" to "+str(args.subjectRange[1])+" inclusive")
     if args.subjectRange[1]<args.subjectRange[0]:
       logger.error("Invalid range.")
