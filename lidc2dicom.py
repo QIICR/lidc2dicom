@@ -17,7 +17,7 @@ class LIDC2DICOMConverter:
     self.segTemplate = "seg_conversion_template.json"
     self.srTemplate = "sr_conversion_template.json"
     self.colorsFile = "GenericColors.txt"
-    self.tempDir="/Users/fedorov/Temp/LIDC_conversion1"
+    self.tempDir="/Users/fedorov/Temp/LIDC_conversion2"
     self.dcmqiRoot = "/Users/fedorov/local/dcmqi-1.1.0-mac-20181017-ef688c4/bin"
 
     # read GenericColors
@@ -103,10 +103,10 @@ class LIDC2DICOMConverter:
                           'calcification':{"CodeValue":'C3672',"CodeMeaning":"Calcification","CodingSchemeDesignator":"NCIt"},
                           'sphericity':{"CodeValue":'400',"CodeMeaning":"Sphericity","CodingSchemeDesignator":lidcCodingScheme},
                           'margin':{"CodeValue":'C25563',"CodeMeaning":'Margin',"CodingSchemeDesignator":"NCIt"},
-                          'lobulation':{"CodeValue":'600',"CodeMeaning":'Lobulation',"CodingSchemeDesignator":lidcCodingScheme},
-                          'spiculation':{"CodeValue":'700',"CodeMeaning":'Spiculation',"CodingSchemeDesignator":lidcCodingScheme},
+                          'lobulation':{"CodeValue":'C62175',"CodeMeaning":'Lobular Pattern',"CodingSchemeDesignator":"NCIt""},
+                          'spiculation':{"CodeValue":'C28749',"CodeMeaning":'Spiculation',"CodingSchemeDesignator":"NCIt"},
                           'texture':{"CodeValue":'C41144',"CodeMeaning":'Texture',"CodingSchemeDesignator":"NCIt"},
-                          'malignancy':{"CodeValue":'900',"CodeMeaning":'Malignancy',"CodingSchemeDesignator":lidcCodingScheme}}
+                          'malignancy':{"CodeValue":'RID36042',"CodeMeaning":'Malignancy',"CodingSchemeDesignator":"RadLex"}}
 
     valuesDictionary = {}
 
@@ -135,9 +135,9 @@ class LIDC2DICOMConverter:
     valuesDictionary['calcification'] = {}
     valuesDictionary['calcification']['1'] = {"CodeValue":'RID35453',"CodeMeaning":"Popcorn calcification sign","CodingSchemeDesignator":"RadLex"}
     valuesDictionary['calcification']['2'] = {"CodeValue":'302',"CodeMeaning":"Laminated appearance","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['calcification']['3'] = {"CodeValue":'303',"CodeMeaning":"Solid appearance","CodingSchemeDesignator":lidcCodingScheme}
+    valuesDictionary['calcification']['3'] = {"CodeValue":'RID5741',"CodeMeaning":"Solid appearance","CodingSchemeDesignator":"RadLex"}
     valuesDictionary['calcification']['4'] = {"CodeValue":'304',"CodeMeaning":"Non-central appearance","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['calcification']['5'] = {"CodeValue":'305',"CodeMeaning":"Central calcification","CodingSchemeDesignator":lidcCodingScheme}
+    valuesDictionary['calcification']['5'] = {"CodeValue":'RID5827',"CodeMeaning":"Central calcification","CodingSchemeDesignator":"RadLex"}
     valuesDictionary['calcification']['6'] = {"CodeValue":'RID28473',"CodeMeaning":"Absent","CodingSchemeDesignator":"RadLex"}
 
     valuesDictionary['sphericity'] = {}
