@@ -18,7 +18,6 @@ class LIDC2DICOMConverter:
     self.srTemplate = "sr_conversion_template.json"
     self.colorsFile = "GenericColors.txt"
     self.tempDir="/Users/fedorov/Temp/LIDC_conversion2"
-    self.dcmqiRoot = "/Users/fedorov/local/dcmqi-1.1.0-mac-20181017-ef688c4/bin"
 
     # read GenericColors
     self.colors = []
@@ -27,6 +26,13 @@ class LIDC2DICOMConverter:
         if l.startswith('#'):
           continue
         self.colors.append([int(c) for c in l.split(' ')[2:5]])
+
+    self.conceptsDictionary = {}
+    self.valuesDictionary = {}
+    with open("concepts_dict.json") as cf:
+      self.conceptsDictionary = json.load(cf)
+    with open("values_dict.json") as vf:
+      self.valuesDictionary = json.load(vf)
 
   def cleanUpTempDir(self, dir):
     shutil.rmtree(os.path.join(dir,"dicom2nrrd"))
@@ -77,7 +83,7 @@ class LIDC2DICOMConverter:
 
     dcmSegFile = os.path.join(self.tempSubjectDir,segName+'.dcm')
 
-    converterCmd = [os.path.join(self.dcmqiRoot,'itkimage2segimage'), "--inputImageList", nrrdSegFile, "--inputDICOMDirectory", seriesDir, "--inputMetadata", jsonSegFile, "--outputDICOM", dcmSegFile]
+    converterCmd = ['itkimage2segimage', "--inputImageList", nrrdSegFile, "--inputDICOMDirectory", seriesDir, "--inputMetadata", jsonSegFile, "--outputDICOM", dcmSegFile]
     self.logger.info("Converting to DICOM SEG with "+str(converterCmd))
 
     sp = subprocess.Popen(converterCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -94,93 +100,6 @@ class LIDC2DICOMConverter:
     except:
       self.logger.error("Failed to read Segmentation file")
       return
-
-    # convert qualitative evaluations
-    # TODO: DAC suggests it is better mix and match standard codes than use non-standard for all
-    lidcCodingScheme = "99LIDCQIICR"
-    conceptsDictionary = {'subtlety':{"CodeValue":'C45992',"CodeMeaning":'Subtlety score',"CodingSchemeDesignator":"NCIt"},
-                          'internalStructure':{"CodeValue":'200',"CodeMeaning":'Internal structure',"CodingSchemeDesignator":lidcCodingScheme},
-                          'calcification':{"CodeValue":'C3672',"CodeMeaning":"Calcification","CodingSchemeDesignator":"NCIt"},
-                          'sphericity':{"CodeValue":'400',"CodeMeaning":"Sphericity","CodingSchemeDesignator":lidcCodingScheme},
-                          'margin':{"CodeValue":'C25563',"CodeMeaning":'Margin',"CodingSchemeDesignator":"NCIt"},
-                          'lobulation':{"CodeValue":'C62175',"CodeMeaning":'Lobular Pattern',"CodingSchemeDesignator":"NCIt""},
-                          'spiculation':{"CodeValue":'C28749',"CodeMeaning":'Spiculation',"CodingSchemeDesignator":"NCIt"},
-                          'texture':{"CodeValue":'C41144',"CodeMeaning":'Texture',"CodingSchemeDesignator":"NCIt"},
-                          'malignancy':{"CodeValue":'RID36042',"CodeMeaning":'Malignancy',"CodingSchemeDesignator":"RadLex"}}
-
-    valuesDictionary = {}
-
-    valuesDictionary['generic'] = {}
-    valuesDictionary['generic']['1'] = {"CodeValue":'001',"CodeMeaning":"1 out of 5","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['generic']['2'] = {"CodeValue":'002',"CodeMeaning":"2 out of 5","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['generic']['3'] = {"CodeValue":'003',"CodeMeaning":"3 out of 5","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['generic']['4'] = {"CodeValue":'004',"CodeMeaning":"4 out of 5","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['generic']['5'] = {"CodeValue":'005',"CodeMeaning":"5 out of 5","CodingSchemeDesignator":lidcCodingScheme}
-
-
-    valuesDictionary['subtlety'] = {}
-    valuesDictionary['subtlety']['1'] = {"CodeValue":'101',"CodeMeaning":"1 out of 5 (Extremely subtle)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['subtlety']['2'] = {"CodeValue":'102',"CodeMeaning":"2 out of 5 (Moderately subtle)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['subtlety']['3'] = {"CodeValue":'103',"CodeMeaning":"3 out of 5 (Fairly subtle)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['subtlety']['4'] = {"CodeValue":'104',"CodeMeaning":"4 out of 5 (Moderately obvious)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['subtlety']['5'] = {"CodeValue":'105',"CodeMeaning":"5 out of 5 (Obvious)","CodingSchemeDesignator":lidcCodingScheme}
-
-    valuesDictionary['internalStructure'] = {}
-    valuesDictionary['internalStructure']['1'] = {"CodeValue":'C12471',"CodeMeaning":"Soft tissue","CodingSchemeDesignator":"NCIt"}
-    valuesDictionary['internalStructure']['2'] = {"CodeValue":'C25278',"CodeMeaning":"Fluid","CodingSchemeDesignator":"NCIt"}
-    valuesDictionary['internalStructure']['3'] = {"CodeValue":'C12472',"CodeMeaning":"Adipose tissue","CodingSchemeDesignator":"NCIt"}
-    valuesDictionary['internalStructure']['4'] = {"CodeValue":'C73434',"CodeMeaning":"Air","CodingSchemeDesignator":"NCIt"}
-
-    # TODO: revisit RadLex and DCM for those codes
-    valuesDictionary['calcification'] = {}
-    valuesDictionary['calcification']['1'] = {"CodeValue":'RID35453',"CodeMeaning":"Popcorn calcification sign","CodingSchemeDesignator":"RadLex"}
-    valuesDictionary['calcification']['2'] = {"CodeValue":'302',"CodeMeaning":"Laminated appearance","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['calcification']['3'] = {"CodeValue":'RID5741',"CodeMeaning":"Solid appearance","CodingSchemeDesignator":"RadLex"}
-    valuesDictionary['calcification']['4'] = {"CodeValue":'304',"CodeMeaning":"Non-central appearance","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['calcification']['5'] = {"CodeValue":'RID5827',"CodeMeaning":"Central calcification","CodingSchemeDesignator":"RadLex"}
-    valuesDictionary['calcification']['6'] = {"CodeValue":'RID28473',"CodeMeaning":"Absent","CodingSchemeDesignator":"RadLex"}
-
-    valuesDictionary['sphericity'] = {}
-    valuesDictionary['sphericity']['1'] = {"CodeValue":'RID5811',"CodeMeaning":"linear","CodingSchemeDesignator":"RadLex"}
-    valuesDictionary['sphericity']['2'] = valuesDictionary['generic']['2']
-    valuesDictionary['sphericity']['3'] = {"CodeValue":'RID5800',"CodeMeaning":"ovoid","CodingSchemeDesignator":"RadLex"}
-    valuesDictionary['sphericity']['4'] = valuesDictionary['generic']['4']
-    valuesDictionary['sphericity']['5'] = {"CodeValue":'RID5799',"CodeMeaning":"round","CodingSchemeDesignator":"RadLex"}
-
-    valuesDictionary['margin'] = {}
-    valuesDictionary['margin']['1'] = {"CodeValue":'RID5709',"CodeMeaning":"Indistinct margin","CodingSchemeDesignator":"RadLex"}
-    valuesDictionary['margin']['2'] = valuesDictionary['generic']['2']
-    valuesDictionary['margin']['3'] = valuesDictionary['generic']['3']
-    valuesDictionary['margin']['4'] = valuesDictionary['generic']['4']
-    valuesDictionary['margin']['5'] = {"CodeValue":'RID5707',"CodeMeaning":"Circumscribed margin","CodingSchemeDesignator":"RadLex"}
-
-    valuesDictionary['lobulation'] = {}
-    valuesDictionary['lobulation']['1'] = {"CodeValue":'601',"CodeMeaning":"1 out of 5 (No lobulation)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['lobulation']['2'] = valuesDictionary['generic']['2']
-    valuesDictionary['lobulation']['3'] = valuesDictionary['generic']['3']
-    valuesDictionary['lobulation']['4'] = valuesDictionary['generic']['4']
-    valuesDictionary['lobulation']['5'] = {"CodeValue":'605',"CodeMeaning":"5 out of 5 (Marked lobulation)","CodingSchemeDesignator":lidcCodingScheme}
-
-    valuesDictionary['spiculation'] = {}
-    valuesDictionary['spiculation']['1'] = {"CodeValue":'701',"CodeMeaning":"1 out of 5 (No spiculation)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['spiculation']['2'] = valuesDictionary['generic']['2']
-    valuesDictionary['spiculation']['3'] = valuesDictionary['generic']['3']
-    valuesDictionary['spiculation']['4'] = valuesDictionary['generic']['4']
-    valuesDictionary['spiculation']['5'] = {"CodeValue":'705',"CodeMeaning":"5 out of 5 (Marked spiculation)","CodingSchemeDesignator":lidcCodingScheme}
-
-    valuesDictionary['texture'] = {}
-    valuesDictionary['texture']['1'] = {"CodeValue":'RID50153',"CodeMeaning":"non-solid pulmonary nodule","CodingSchemeDesignator":"RadLex"}
-    valuesDictionary['texture']['2'] = valuesDictionary['generic']['2']
-    valuesDictionary['texture']['3'] = {"CodeValue":'RID50152',"CodeMeaning":"part-solid pulmonary nodule","CodingSchemeDesignator":"RadLex"}
-    valuesDictionary['texture']['4'] = valuesDictionary['generic']['4']
-    valuesDictionary['texture']['5'] = {"CodeValue":'RID50151',"CodeMeaning":"solid pulmonary nodule","CodingSchemeDesignator":"RadLex"}
-
-    valuesDictionary['malignancy'] = {}
-    valuesDictionary['malignancy']['1'] = {"CodeValue":'901',"CodeMeaning":"1 out of 5 (Highly Unlikely for Cancer)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['malignancy']['2'] = {"CodeValue":'902',"CodeMeaning":"2 out of 5 (Moderately Unlikely for Cancer)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['malignancy']['3'] = {"CodeValue":'903',"CodeMeaning":"3 out of 5 (Indeterminate Likelihood)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['malignancy']['4'] = {"CodeValue":'904',"CodeMeaning":"4 out of 5 (Moderately Suspicious for Cancer)","CodingSchemeDesignator":lidcCodingScheme}
-    valuesDictionary['malignancy']['5'] = {"CodeValue":'905',"CodeMeaning":"5 out of 5 (Highly Suspicious for Cancer)","CodingSchemeDesignator":lidcCodingScheme}
 
     with open(self.srTemplate,'r') as f:
       srJSON = json.load(f)
@@ -230,12 +149,12 @@ class LIDC2DICOMConverter:
     measurementItems.append(diameterItem)
     measurementItems.append(surfaceItem)
 
-    for attribute in conceptsDictionary.keys():
+    for attribute in self.conceptsDictionary.keys():
       # print(attribute+': '+str(getattr(a, attribute)))
       try:
         qItem = {}
-        qItem["conceptCode"] = conceptsDictionary[attribute]
-        qItem["conceptValue"] = valuesDictionary[attribute][str(getattr(a, attribute))]
+        qItem["conceptCode"] = self.conceptsDictionary[attribute]
+        qItem["conceptValue"] = self.valuesDictionary[attribute][str(getattr(a, attribute))]
         qualitativeEvaluations.append(qItem)
       except KeyError:
         self.logger.info("Skipping invalid attribute: "+attribute+': '+str(getattr(a, attribute)))
@@ -255,7 +174,7 @@ class LIDC2DICOMConverter:
       json.dump(srJSON, f, indent=2)
 
     dcmSRFile = os.path.join(self.tempSubjectDir,srName+'.dcm')
-    converterCmd = [os.path.join(self.dcmqiRoot,'tid1500writer'), "--inputMetadata", jsonSRFile, "--inputImageLibraryDirectory", seriesDir, "--inputCompositeContextDirectory", self.tempSubjectDir, "--outputDICOM", dcmSRFile]
+    converterCmd = ['tid1500writer', "--inputMetadata", jsonSRFile, "--inputImageLibraryDirectory", seriesDir, "--inputCompositeContextDirectory", self.tempSubjectDir, "--outputDICOM", dcmSRFile]
     self.logger.info("Converting with "+str(converterCmd))
 
     sp = subprocess.Popen(converterCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

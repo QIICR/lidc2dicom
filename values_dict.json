@@ -1,0 +1,272 @@
+{
+  "generic": {
+    "1": {
+      "CodeValue": "001",
+      "CodeMeaning": "1 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "2": {
+      "CodeValue": "002",
+      "CodeMeaning": "2 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "3": {
+      "CodeValue": "003",
+      "CodeMeaning": "3 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "4": {
+      "CodeValue": "004",
+      "CodeMeaning": "4 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "5": {
+      "CodeValue": "005",
+      "CodeMeaning": "5 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    }
+  },
+  "subtlety": {
+    "1": {
+      "CodeValue": "101",
+      "CodeMeaning": "1 out of 5 (Extremely subtle)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "2": {
+      "CodeValue": "102",
+      "CodeMeaning": "2 out of 5 (Moderately subtle)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "3": {
+      "CodeValue": "103",
+      "CodeMeaning": "3 out of 5 (Fairly subtle)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "4": {
+      "CodeValue": "104",
+      "CodeMeaning": "4 out of 5 (Moderately obvious)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "5": {
+      "CodeValue": "105",
+      "CodeMeaning": "5 out of 5 (Obvious)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    }
+  },
+  "internalStructure": {
+    "1": {
+      "CodeValue": "C12471",
+      "CodeMeaning": "Soft tissue",
+      "CodingSchemeDesignator": "NCIt"
+    },
+    "2": {
+      "CodeValue": "C25278",
+      "CodeMeaning": "Fluid",
+      "CodingSchemeDesignator": "NCIt"
+    },
+    "3": {
+      "CodeValue": "C12472",
+      "CodeMeaning": "Adipose tissue",
+      "CodingSchemeDesignator": "NCIt"
+    },
+    "4": {
+      "CodeValue": "C73434",
+      "CodeMeaning": "Air",
+      "CodingSchemeDesignator": "NCIt"
+    }
+  },
+  "calcification": {
+    "1": {
+      "CodeValue": "RID35453",
+      "CodeMeaning": "Popcorn calcification sign",
+      "CodingSchemeDesignator": "RadLex"
+    },
+    "2": {
+      "CodeValue": "302",
+      "CodeMeaning": "Laminated appearance",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "3": {
+      "CodeValue": "RID5741",
+      "CodeMeaning": "Solid appearance",
+      "CodingSchemeDesignator": "RadLex"
+    },
+    "4": {
+      "CodeValue": "304",
+      "CodeMeaning": "Non-central appearance",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "5": {
+      "CodeValue": "RID5827",
+      "CodeMeaning": "Central calcification",
+      "CodingSchemeDesignator": "RadLex"
+    },
+    "6": {
+      "CodeValue": "RID28473",
+      "CodeMeaning": "Absent",
+      "CodingSchemeDesignator": "RadLex"
+    }
+  },
+  "sphericity": {
+    "1": {
+      "CodeValue": "RID5811",
+      "CodeMeaning": "linear",
+      "CodingSchemeDesignator": "RadLex"
+    },
+    "2": {
+      "CodeValue": "002",
+      "CodeMeaning": "2 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "3": {
+      "CodeValue": "RID5800",
+      "CodeMeaning": "ovoid",
+      "CodingSchemeDesignator": "RadLex"
+    },
+    "4": {
+      "CodeValue": "004",
+      "CodeMeaning": "4 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "5": {
+      "CodeValue": "RID5799",
+      "CodeMeaning": "round",
+      "CodingSchemeDesignator": "RadLex"
+    }
+  },
+  "margin": {
+    "1": {
+      "CodeValue": "RID5709",
+      "CodeMeaning": "Indistinct margin",
+      "CodingSchemeDesignator": "RadLex"
+    },
+    "2": {
+      "CodeValue": "002",
+      "CodeMeaning": "2 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "3": {
+      "CodeValue": "003",
+      "CodeMeaning": "3 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "4": {
+      "CodeValue": "004",
+      "CodeMeaning": "4 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "5": {
+      "CodeValue": "RID5707",
+      "CodeMeaning": "Circumscribed margin",
+      "CodingSchemeDesignator": "RadLex"
+    }
+  },
+  "lobulation": {
+    "1": {
+      "CodeValue": "601",
+      "CodeMeaning": "1 out of 5 (No lobulation)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "2": {
+      "CodeValue": "002",
+      "CodeMeaning": "2 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "3": {
+      "CodeValue": "003",
+      "CodeMeaning": "3 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "4": {
+      "CodeValue": "004",
+      "CodeMeaning": "4 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "5": {
+      "CodeValue": "605",
+      "CodeMeaning": "5 out of 5 (Marked lobulation)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    }
+  },
+  "spiculation": {
+    "1": {
+      "CodeValue": "701",
+      "CodeMeaning": "1 out of 5 (No spiculation)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "2": {
+      "CodeValue": "002",
+      "CodeMeaning": "2 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "3": {
+      "CodeValue": "003",
+      "CodeMeaning": "3 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "4": {
+      "CodeValue": "004",
+      "CodeMeaning": "4 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "5": {
+      "CodeValue": "705",
+      "CodeMeaning": "5 out of 5 (Marked spiculation)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    }
+  },
+  "texture": {
+    "1": {
+      "CodeValue": "RID50153",
+      "CodeMeaning": "non-solid pulmonary nodule",
+      "CodingSchemeDesignator": "RadLex"
+    },
+    "2": {
+      "CodeValue": "002",
+      "CodeMeaning": "2 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "3": {
+      "CodeValue": "RID50152",
+      "CodeMeaning": "part-solid pulmonary nodule",
+      "CodingSchemeDesignator": "RadLex"
+    },
+    "4": {
+      "CodeValue": "004",
+      "CodeMeaning": "4 out of 5",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "5": {
+      "CodeValue": "RID50151",
+      "CodeMeaning": "solid pulmonary nodule",
+      "CodingSchemeDesignator": "RadLex"
+    }
+  },
+  "malignancy": {
+    "1": {
+      "CodeValue": "901",
+      "CodeMeaning": "1 out of 5 (Highly Unlikely for Cancer)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "2": {
+      "CodeValue": "902",
+      "CodeMeaning": "2 out of 5 (Moderately Unlikely for Cancer)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "3": {
+      "CodeValue": "903",
+      "CodeMeaning": "3 out of 5 (Indeterminate Likelihood)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "4": {
+      "CodeValue": "904",
+      "CodeMeaning": "4 out of 5 (Moderately Suspicious for Cancer)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    },
+    "5": {
+      "CodeValue": "905",
+      "CodeMeaning": "5 out of 5 (Highly Suspicious for Cancer)",
+      "CodingSchemeDesignator": "99LIDCQIICR"
+    }
+  }
+}

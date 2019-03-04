@@ -1,0 +1,47 @@
+{
+  "subtlety": {
+    "CodeValue": "C45992",
+    "CodeMeaning": "Subtlety score",
+    "CodingSchemeDesignator": "NCIt"
+  },
+  "internalStructure": {
+    "CodeValue": "200",
+    "CodeMeaning": "Internal structure",
+    "CodingSchemeDesignator": "99LIDCQIICR"
+  },
+  "calcification": {
+    "CodeValue": "C3672",
+    "CodeMeaning": "Calcification",
+    "CodingSchemeDesignator": "NCIt"
+  },
+  "sphericity": {
+    "CodeValue": "400",
+    "CodeMeaning": "Sphericity",
+    "CodingSchemeDesignator": "99LIDCQIICR"
+  },
+  "margin": {
+    "CodeValue": "C25563",
+    "CodeMeaning": "Margin",
+    "CodingSchemeDesignator": "NCIt"
+  },
+  "lobulation": {
+    "CodeValue": "C62175",
+    "CodeMeaning": "Lobular Pattern",
+    "CodingSchemeDesignator": "NCIt"
+  },
+  "spiculation": {
+    "CodeValue": "C28749",
+    "CodeMeaning": "Spiculation",
+    "CodingSchemeDesignator": "NCIt"
+  },
+  "texture": {
+    "CodeValue": "C41144",
+    "CodeMeaning": "Texture",
+    "CodingSchemeDesignator": "NCIt"
+  },
+  "malignancy": {
+    "CodeValue": "RID36042",
+    "CodeMeaning": "Malignancy",
+    "CodingSchemeDesignator": "RadLex"
+  }
+}
