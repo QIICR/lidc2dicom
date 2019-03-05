@@ -35,9 +35,23 @@ class LIDC2DICOMConverter:
       self.valuesDictionary = json.load(vf)
 
   def cleanUpTempDir(self, dir):
-    shutil.rmtree(os.path.join(dir,"dicom2nrrd"))
     for p in Path(dir).glob("*.nrrd"):
       p.unlink()
+
+  def saveAnnotationAsNRRD(self, annotation, refVolume, fileName):
+    maskArray = annotation.boolean_mask(10000).astype(np.int16)
+
+    maskArray = np.swapaxes(maskArray,0,2).copy()
+    maskArray = np.rollaxis(maskArray,2,1).copy()
+
+    maskVolume = itk.GetImageFromArray(maskArray)
+    maskVolume.SetSpacing(refVolume.GetSpacing())
+    maskVolume.SetOrigin(refVolume.GetOrigin())
+    writerType = itk.ImageFileWriter[itk.Image[itk.SS, 3]]
+    writer = writerType.New()
+    writer.SetFileName(fileName)
+    writer.SetInput(maskVolume)
+    writer.Update()
 
   def convertSingleAnnotation(self, nCount, aCount, a, ctDCM, noduleUID, volume, seriesDir):
     with open(self.segTemplate,'r') as f:
@@ -46,6 +60,12 @@ class LIDC2DICOMConverter:
     # update as necessary!
     noduleName = "Nodule "+str(nCount+1)
     segName = "Nodule "+str(nCount+1) +" - Annotation " + a._nodule_id
+
+    nrrdSegFile = os.path.join(self.tempSubjectDir, segName+'.nrrd')
+    if not os.path.exists(nrrdSegFile):
+      self.logger.error("Cannot convert single annotation - file does not exist")
+      raise Exception("Cannot convert single annotation - file does not exist")
+
     segJSON["segmentAttributes"][0][0]["SegmentDescription"] = segName
     segJSON["segmentAttributes"][0][0]["SegmentLabel"] = segName
     segJSON["SeriesDescription"] = "Segmentation of "+segName
@@ -65,21 +85,6 @@ class LIDC2DICOMConverter:
     jsonSegFile = os.path.join(self.tempSubjectDir,segName+'.json')
     with open(jsonSegFile, "w") as f:
       json.dump(segJSON, f, indent=2)
-
-    maskArray = a.boolean_mask(10000).astype(np.int16)
-
-    maskArray = np.swapaxes(maskArray,0,2).copy()
-    maskArray = np.rollaxis(maskArray,2,1).copy()
-
-    maskVolume = itk.GetImageFromArray(maskArray)
-    maskVolume.SetSpacing(volume.GetSpacing())
-    maskVolume.SetOrigin(volume.GetOrigin())
-    writerType = itk.ImageFileWriter[itk.Image[itk.SS, 3]]
-    writer = writerType.New()
-    nrrdSegFile = os.path.join(self.tempSubjectDir,segName+'.nrrd')
-    writer.SetFileName(nrrdSegFile)
-    writer.SetInput(maskVolume)
-    writer.Update()
 
     dcmSegFile = os.path.join(self.tempSubjectDir,segName+'.dcm')
 
@@ -216,12 +221,7 @@ class LIDC2DICOMConverter:
       if not ok:
         self.logger.warning("Geometry inconsistent for subject %s" % (s))
 
-      self.tempSubjectDir = os.path.join(self.tempDir,s)
-      reconTempDir = os.path.join(self.tempSubjectDir,"dicom2nrrd")
-      try:
-        os.makedirs(reconTempDir)
-      except:
-        pass
+      self.tempSubjectDir = os.path.join(self.tempDir,s,studyUID,seriesUID)
 
       scanNRRDFile = os.path.join(self.tempSubjectDir,s+'_CT.nrrd')
       if not os.path.exists(scanNRRDFile):
@@ -262,6 +262,10 @@ class LIDC2DICOMConverter:
         for aCount,a in enumerate(nodule):
 
           clusteredAnnotationIDs.append(a.id)
+
+          annotationFileName = "Nodule "+str(nCount+1) +" - Annotation " + a._nodule_id+'.nrrd'
+          self.saveAnnotationAsNRRD(a, volume, os.path.join(self.tempSubjectDir,annotationFileName))
+
           self.convertSingleAnnotation(nCount, aCount, a, ctDCM, noduleUID, volume, seriesDir)
 
 
@@ -275,7 +279,90 @@ class LIDC2DICOMConverter:
           noduleUID = pydicom.uid.generate_uid(prefix=None)
           self.convertSingleAnnotation(nCount, aCount, ua, ctDCM, noduleUID, volume, seriesDir)
 
-      self.cleanUpTempDir(self.tempSubjectDir)
+      #self.cleanUpTempDir(self.tempSubjectDir)
+
+  def makeCompositeObjects(self, subjectID):
+
+    # convert all segmentations and measurements into composite objects
+    # 1. find all segmentations
+    # 2. read all, append metadata
+    # 3. find all measurements
+    # 4. read all, append metadata
+    import re
+    s = 'LIDC-IDRI-%04i' % subjectID
+    self.logger.info("Making composite objects for "+s)
+
+    scans = pl.query(pl.Scan).filter(pl.Scan.patient_id == s)
+    self.logger.info(" Found %d scans" % (scans.count()))
+
+    # cannot just take all segmentation files in a folder, since
+
+    for scan in scans:
+      studyUID = scan.study_instance_uid
+      seriesUID = scan.series_instance_uid
+      seriesDir = os.path.join(self.rootDir,s,studyUID,seriesUID)
+      if not os.path.exists(seriesDir):
+        self.logger.error("Files not found for subject "+s)
+        return
+
+      dcmFiles = glob.glob(os.path.join(seriesDir,"*.dcm"))
+      if not len(dcmFiles):
+        logger.error("No DICOM files found for subject "+s)
+        return
+
+      firstFile = os.path.join(seriesDir,dcmFiles[0])
+
+      try:
+        ctDCM = pydicom.read_file(firstFile)
+      except:
+        logger.error("Failed to read input file "+firstFile)
+        return
+
+      self.instanceCount = 1000
+
+      subjectScanTempDir = os.path.join(self.tempDir,s,studyUID,seriesUID)
+      allSegmentations = glob.glob(os.path.join(subjectScanTempDir, 'Nodule*Annotation*.nrrd'))
+
+      segMetadata = {}
+      nrrdSegFileList = ""
+
+      for seg in allSegmentations:
+
+        prefix = seg[:-5]
+        matches = re.match('Nodule (\d+) - Annotation (.+)\.', os.path.split(seg)[1])
+        print("Nodule: "+matches.group(1)+" Annotation: "+matches.group(2))
+
+        if not segMetadata:
+          segMetadata = json.load(open(prefix+".json"))
+        else:
+          thisSegMetadata = json.load(open(prefix+".json"))
+          segMetadata["segmentAttributes"].append(thisSegMetadata["segmentAttributes"][0])
+
+        nrrdSegFileList = nrrdSegFileList+seg+","
+
+      compositeSEGFileName = os.path.join(subjectScanTempDir,"all_segmentations.dcm")
+      nrrdSegFileList = nrrdSegFileList[:-1]
+
+      segMetadata["ContentDescription"] = "Lung nodule segmentation - all"
+      segMetadata["SeriesDescription"] = "Segmentations of all nodules"
+      segMetadata["SeriesNumber"] = str(int(ctDCM.SeriesNumber)+self.instanceCount)
+      self.instanceCount = self.instanceCount+1
+
+      allSegsJSON = os.path.join(subjectScanTempDir, "all_segmentations.json")
+      with open(allSegsJSON,"w") as f:
+        json.dump(segMetadata, f, indent=2)
+
+      converterCmd = ['itkimage2segimage', "--inputImageList", nrrdSegFileList, "--inputDICOMDirectory", seriesDir, "--inputMetadata", allSegsJSON, "--outputDICOM", compositeSEGFileName]
+      self.logger.info("Converting to DICOM SEG with "+str(converterCmd))
+
+      sp = subprocess.Popen(converterCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      (stdout, stderr) = sp.communicate()
+      self.logger.info("itkimage2segimage stdout: "+stdout.decode('ascii'))
+      self.logger.warning("itkimage2segimage stderr: "+stderr.decode('ascii'))
+
+
+    #'Nodule (\d+) - Annotation (.*)')
+    #print(allSegmentations)
 
 def main():
   import argparse
@@ -313,6 +400,13 @@ def main():
     dest="outputDir",
     help="Directory for storing the results of conversion."
   )
+  parser.add_argument(
+    '--composite',
+    action="store_true",
+    dest="composite",
+    help="Make composite objects (1 SEG and 1 SR that contain all segmentations/measurement for all nodes/annotations)."
+  )
+
 
   args = parser.parse_args()
 
@@ -336,18 +430,23 @@ def main():
   if args.subjectIDs:
     logger.info("Processing subjects "+str(args.subjectIDs))
     for s in args.subjectIDs:
-      converter.convertForSubject(s)
+      #converter.convertForSubject(s)
+      if args.composite:
+        converter.makeCompositeObjects(s)
   elif args.subjectRange is not None and len(args.subjectRange):
     logger.info("Processing subjects from "+str(args.subjectRange[0])+" to "+str(args.subjectRange[1])+" inclusive")
     if args.subjectRange[1]<args.subjectRange[0]:
       logger.error("Invalid range.")
     for s in range(args.subjectRange[0],args.subjectRange[1]+1,1):
       converter.convertForSubject(s)
+      if args.composite:
+        converter.makeCompositeObjects(s)
   elif args.allSubjects:
     logging.info("Processing all subjects from 1 to 1012.")
     for s in range(1,1013,1):
       converter.convertForSubject(s)
-
+      if args.composite:
+        converter.makeCompositeObjects(s)
 
 if __name__ == "__main__":
   main()
