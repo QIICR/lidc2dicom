@@ -325,8 +325,9 @@ class LIDC2DICOMConverter:
 
       segMetadata = {}
       nrrdSegFileList = ""
+      srMetadata = {}
 
-      for seg in allSegmentations:
+      for segID,seg in enumerate(allSegmentations):
 
         prefix = seg[:-5]
         matches = re.match('Nodule (\d+) - Annotation (.+)\.', os.path.split(seg)[1])
@@ -338,19 +339,28 @@ class LIDC2DICOMConverter:
           thisSegMetadata = json.load(open(prefix+".json"))
           segMetadata["segmentAttributes"].append(thisSegMetadata["segmentAttributes"][0])
 
-        nrrdSegFileList = nrrdSegFileList+seg+","
+        if not srMetadata:
+          srMetadata = json.load(open(prefix+" measurements.json"))
+        else:
+          thisSRMetadata = json.load(open(prefix+" measurements.json"))
+          thisSRMetadata["Measurements"][0]["ReferencedSegment"] = segID+1
+          srMetadata["Measurements"].append(thisSRMetadata["Measurements"][0])
 
-      compositeSEGFileName = os.path.join(subjectScanTempDir,"all_segmentations.dcm")
-      nrrdSegFileList = nrrdSegFileList[:-1]
+        nrrdSegFileList = nrrdSegFileList+seg+","
 
       segMetadata["ContentDescription"] = "Lung nodule segmentation - all"
       segMetadata["SeriesDescription"] = "Segmentations of all nodules"
       segMetadata["SeriesNumber"] = str(int(ctDCM.SeriesNumber)+self.instanceCount)
       self.instanceCount = self.instanceCount+1
 
+      # run SEG converter
+
       allSegsJSON = os.path.join(subjectScanTempDir, "all_segmentations.json")
       with open(allSegsJSON,"w") as f:
         json.dump(segMetadata, f, indent=2)
+
+      compositeSEGFileName = os.path.join(subjectScanTempDir,"all_segmentations.dcm")
+      nrrdSegFileList = nrrdSegFileList[:-1]
 
       converterCmd = ['itkimage2segimage', "--inputImageList", nrrdSegFileList, "--inputDICOMDirectory", seriesDir, "--inputMetadata", allSegsJSON, "--outputDICOM", compositeSEGFileName]
       self.logger.info("Converting to DICOM SEG with "+str(converterCmd))
@@ -359,6 +369,43 @@ class LIDC2DICOMConverter:
       (stdout, stderr) = sp.communicate()
       self.logger.info("itkimage2segimage stdout: "+stdout.decode('ascii'))
       self.logger.warning("itkimage2segimage stderr: "+stderr.decode('ascii'))
+
+      if not os.path.exists(compositeSEGFileName):
+        self.logger.error("Failed to access output composite SEG file for "+s)
+
+      # populate composite SR JSON
+      # need SEG SOPInstnaceUID for that purpose
+      segDcm = pydicom.read_file(compositeSEGFileName)
+      segUID = segDcm.SOPInstanceUID
+      ctSeriesUID = segDcm.ReferencedSeriesSequence[0].SeriesInstanceUID
+
+      for mItem in range(len(srMetadata["Measurements"])):
+        srMetadata["Measurements"][mItem]["segmentationSOPInstanceUID"] = segUID
+
+      srMetadata["compositeContext"] = [os.path.split(compositeSEGFileName)[1]]
+
+      srMetadata["ContentDescription"] = "Lung nodule measurements - all"
+      srMetadata["SeriesDescription"] = "Evaluations for all nodules"
+      srMetadata["SeriesNumber"] = str(int(ctDCM.SeriesNumber)+self.instanceCount)
+      self.instanceCount = self.instanceCount+1
+
+      allSrsJSON = os.path.join(subjectScanTempDir, "all_measurements.json")
+      with open(allSrsJSON,"w") as f:
+        json.dump(srMetadata, f, indent=2)
+
+      compositeSRFileName = os.path.join(subjectScanTempDir,"all_measurements.dcm")
+      nrrdSegFileList = nrrdSegFileList[:-1]
+
+      converterCmd = ['tid1500writer', "--inputMetadata", allSrsJSON, "--inputImageLibraryDirectory", seriesDir, "--inputCompositeContextDirectory", subjectScanTempDir, "--outputDICOM", compositeSRFileName]
+      self.logger.info("Converting to DICOM SR with "+str(converterCmd))
+
+      sp = subprocess.Popen(converterCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      (stdout, stderr) = sp.communicate()
+      self.logger.info("tid1500writer stdout: "+stdout.decode('ascii'))
+      self.logger.warning("tid1500writer stderr: "+stderr.decode('ascii'))
+
+      if not os.path.exists(compositeSRFileName):
+        self.logger.error("Failed to access output composite SR file for "+s)
 
 
     #'Nodule (\d+) - Annotation (.*)')
@@ -430,7 +477,7 @@ def main():
   if args.subjectIDs:
     logger.info("Processing subjects "+str(args.subjectIDs))
     for s in args.subjectIDs:
-      #converter.convertForSubject(s)
+      converter.convertForSubject(s)
       if args.composite:
         converter.makeCompositeObjects(s)
   elif args.subjectRange is not None and len(args.subjectRange):
