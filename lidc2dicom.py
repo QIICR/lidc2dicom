@@ -326,6 +326,9 @@ class LIDC2DICOMConverter:
       subjectScanTempDir = os.path.join(self.tempDir,s,studyUID,seriesUID)
       allSegmentations = glob.glob(os.path.join(subjectScanTempDir, 'Nodule*Annotation*.nrrd'))
 
+      if not len(allSegmentations):
+        continue
+
       segMetadata = {}
       nrrdSegFileList = ""
       srMetadata = {}
