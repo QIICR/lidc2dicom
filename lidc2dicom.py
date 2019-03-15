@@ -230,7 +230,7 @@ class LIDC2DICOMConverter:
       if not os.path.exists(scanNRRDFile):
         # convert
         # tempDir = tempfile.mkdtemp()
-        plastimatchCmd = ['/Users/fedorov/build/plastimatch/plastimatch', 'convert','--input',seriesDir,'--output-img',scanNRRDFile]
+        plastimatchCmd = ['plastimatch', 'convert','--input',seriesDir,'--output-img',scanNRRDFile]
         self.logger.info("Running plastimatch with "+str(plastimatchCmd))
 
         sp = subprocess.Popen(plastimatchCmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
