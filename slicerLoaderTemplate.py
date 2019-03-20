@@ -3,8 +3,6 @@ import qt, ctk, slicer
 import DICOMLib
 from DICOMLib.DICOMUtils import TemporaryDICOMDatabase
 import logging
-#from slicer.ScriptedLoadableModule import *
-
 
 class SlicerLIDCLoader():
   @property
@@ -83,13 +81,6 @@ class SlicerLIDCLoader():
               ctPlugin.load(ctLoadable)
 
             plugin.load(loadable)
-              #print(loadable.referencedSegInstanceUIDs)
-              # store lists of UIDs separately to avoid re-parsing later
-              #print(loadable.ReferencedSegmentationInstanceUIDs)
-              #print(loadable.ReferencedRWVMSeriesInstanceUIDs)
-              #print("Other: "+str(loadable.ReferencedOtherInstanceUIDs))
-              #print("Referenced: "+str(loadable.referencedInstanceUIDs))
-              #plugin, loadable = self._getPluginAndLoadableForFiles(seriesDescription, files)
 
     return True
 
@@ -114,20 +105,17 @@ class SlicerLIDCLoader():
     sn = slicer.mrmlScene.GetFirstNodeByClass('vtkMRMLSegmentationNode')
     snc = slicer.mrmlScene.GetNodesByClass("vtkMRMLSegmentationNode")
     for snNumber in range(snc.GetNumberOfItems()):
+
       sn = snc.GetItemAsObject(snNumber)
       segmentation = sn.GetSegmentation()
-      #displayNode = sn.GetDisplayNode()
       segmentation.SetConversionParameter('Smoothing factor', '0.0')
       segmentation.CreateRepresentation(vtkSegConverter.GetSegmentationClosedSurfaceRepresentationName(), True)
-      #displayNode.SetPreferredDisplayRepresentationName3D(vtkSegConverter.GetSegmentationClosedSurfaceRepresentationName())
 
       csl=CustomSegmentEditor.CustomSegmentEditorLogic()
       segmentNode = segmentation.GetNthSegment(0)
       centroid = csl.getSegmentCentroid(sn, segmentNode)
       markupsLogic = slicer.modules.markups.logic()
       markupsLogic.JumpSlicesToLocation(centroid[0],centroid[1],centroid[2], True)
-
-      #sn = slicer.mrmlScene.GetNextNodeByClass('vtkMRMLSegmentationNode')
 
     # center 3d viewer on the segmentation surface
     t=slicer.app.layoutManager().threeDWidget(0).threeDView().resetFocalPoint()
