@@ -1,0 +1,163 @@
+import argparse, sys, shutil, os, logging
+import qt, ctk, slicer
+import DICOMLib
+from DICOMLib.DICOMUtils import TemporaryDICOMDatabase
+import logging
+#from slicer.ScriptedLoadableModule import *
+
+
+class SlicerLIDCLoader():
+  @property
+  def dicomDatabase(self):
+    return slicer.dicomDatabase
+
+  @property
+  def patients(self):
+    p = self.dicomDatabase.patients()
+    print(p)
+    return p
+
+  def __init__(self, tempDB=None):
+    self.tempDICOMDB = tempDB
+
+  def loadSeries(self, seriesInstanceUID=None, modality=None):
+    self._processData(seriesInstanceUIDToLoad=seriesInstanceUID,modalityToLoad=modality)
+
+  def importDirectory(self, inputDir):
+    print('Input directory: %s' % inputDir)
+    self.indexer = getattr(self, "indexer", None)
+    if not self.indexer:
+      self.indexer = ctk.ctkDICOMIndexer()
+    self.indexer.addDirectory(self.dicomDatabase, inputDir)
+    print('Import completed, total %s patients imported' % len(self.patients))
+
+  def _processData(self, seriesInstanceUIDToLoad=None, modalityToLoad=None):
+    for patient in self.patients:
+      print(patient)
+      for study in self.dicomDatabase.studiesForPatient(patient):
+        #print self.dicomDatabase.seriesForStudy(study)
+        series = self.dicomDatabase.seriesForStudy(study)
+        for seriesIndex, currentSeries in enumerate(series, start=1):
+          files = self.dicomDatabase.filesForSeries(currentSeries)
+
+          if len(files) == 0:
+            continue
+
+          thisSeriesInstanceUID = self.dicomDatabase.fileValue(files[0], '0020,000e')
+          seriesDescription = self.dicomDatabase.fileValue(files[0], '0008,103E')
+          modality = self.dicomDatabase.fileValue(files[0], '0008,0060')
+
+          print("This series: "+thisSeriesInstanceUID)
+          if seriesInstanceUIDToLoad:
+            if thisSeriesInstanceUID != seriesInstanceUID:
+              continue
+
+          if modalityToLoad:
+            if modality != modalityToLoad:
+              continue
+
+          print("Found series of modality "+modality)
+          if modality == "CT":
+            plugin, loadable = self._getPluginAndLoadableForFiles(seriesDescription, files, ["DICOMScalarVolumePlugin"])
+            plugin.load(loadable)
+          elif modality == "SR":
+            plugin, loadable = self._getPluginAndLoadableForFiles(seriesDescription, files, ["DICOMTID1500Plugin"])
+
+            if loadable.ReferencedOtherInstanceUIDs:
+              #print("Trying to load the CT")
+              #print(loadable.ReferencedOtherInstanceUIDs)
+
+              referencedFileList = []
+              for instance in loadable.ReferencedOtherInstanceUIDs:
+                referencedFileList.append(self.dicomDatabase.fileForInstance(instance))
+
+              ctPlugin, ctLoadable = self._getPluginAndLoadableForFiles(seriesDescription, referencedFileList, ["DICOMScalarVolumePlugin"])
+              print("CT loadable is "+str(ctLoadable))
+              ctPlugin.load(ctLoadable)
+
+            plugin.load(loadable)
+              #print(loadable.referencedSegInstanceUIDs)
+              # store lists of UIDs separately to avoid re-parsing later
+              #print(loadable.ReferencedSegmentationInstanceUIDs)
+              #print(loadable.ReferencedRWVMSeriesInstanceUIDs)
+              #print("Other: "+str(loadable.ReferencedOtherInstanceUIDs))
+              #print("Referenced: "+str(loadable.referencedInstanceUIDs))
+              #plugin, loadable = self._getPluginAndLoadableForFiles(seriesDescription, files)
+
+    return True
+
+  def _getPluginAndLoadableForFiles(self, seriesDescription, files, plugins=[]):
+    for pluginName in plugins:
+      plugin = slicer.modules.dicomPlugins[pluginName]()
+      loadables = plugin.examine([files])
+      if len(loadables) == 0:
+        print("No loadables")
+        continue
+      loadables.sort(key=lambda x: x.confidence, reverse=True)
+      if loadables[0].confidence > 0.1:
+        print("Have confident loadable!")
+        return plugin, loadables[0]
+    return None, None
+
+  def showSegmentations(self):
+
+    from QRCustomizations import CustomSegmentEditor
+    import vtkSegmentationCorePython
+    vtkSegConverter = vtkSegmentationCorePython.vtkSegmentationConverter
+    sn = slicer.mrmlScene.GetFirstNodeByClass('vtkMRMLSegmentationNode')
+    snc = slicer.mrmlScene.GetNodesByClass("vtkMRMLSegmentationNode")
+    for snNumber in range(snc.GetNumberOfItems()):
+      sn = snc.GetItemAsObject(snNumber)
+      segmentation = sn.GetSegmentation()
+      #displayNode = sn.GetDisplayNode()
+      segmentation.CreateRepresentation(vtkSegConverter.GetSegmentationClosedSurfaceRepresentationName(), True)
+      #displayNode.SetPreferredDisplayRepresentationName3D(vtkSegConverter.GetSegmentationClosedSurfaceRepresentationName())
+
+      csl=CustomSegmentEditor.CustomSegmentEditorLogic()
+      segmentNode = segmentation.GetNthSegment(0)
+      centroid = csl.getSegmentCentroid(sn, segmentNode)
+      markupsLogic = slicer.modules.markups.logic()
+      markupsLogic.JumpSlicesToLocation(centroid[0],centroid[1],centroid[2], True)
+
+      #sn = slicer.mrmlScene.GetNextNodeByClass('vtkMRMLSegmentationNode')
+
+    # center 3d viewer on the segmentation surface
+    t=slicer.app.layoutManager().threeDWidget(0).threeDView().resetFocalPoint()
+
+
+slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
+
+CT_DICOM_PATH = "<CT_DICOM_PATH_PLACEHOLDER>"
+DERIVED_DICOM_PATH = "<DERIVED_DICOM_PATH_PLACEHOLDER>"
+SR_SERIES_UID = "<SR_SERIES_UID_PLACEHOLDER>"
+
+with TemporaryDICOMDatabase(os.path.join("/Users/fedorov/Temp/SlicerScripts", "CtkDICOMDatabase")) as db:
+  srSeries = SR_SERIES_UID
+  sl = SlicerLIDCLoader(tempDB=db)
+  sl.importDirectory(CT_DICOM_PATH)
+  sl.importDirectory(DERIVED_DICOM_PATH)
+  if srSeries is not None:
+    # load all SRs and corresponding SEG+CT
+    sl.loadSeries(modality="SR")
+  else:
+    # load just one SR
+    sl.loadSeries(seriesInstanceUID=srSeries)
+
+  # make all segmentations visible in slice viewers and 3d
+  from QRCustomizations import CustomSegmentEditor
+  import vtkSegmentationCorePython
+  vtkSegConverter = vtkSegmentationCorePython.vtkSegmentationConverter
+  sn = slicer.mrmlScene.GetFirstNodeByClass('vtkMRMLSegmentationNode')
+  while sn:
+    segmentation = sn.GetSegmentation()
+    segmentation.CreateRepresentation(vtkSegConverter.GetSegmentationClosedSurfaceRepresentationName(), True)
+    csl=CustomSegmentEditor.CustomSegmentEditorLogic()
+    segmentNode = segmentation.GetNthSegment(0)
+    centroid = csl.getSegmentCentroid(sn, segmentNode)
+    markupsLogic = slicer.modules.markups.logic()
+    markupsLogic.JumpSlicesToLocation(centroid[0],centroid[1],centroid[2], True)
+
+    sn = slicer.mrmlScene.GetNextNodeByClass('vtkMRMLSegmentationNode')
+
+  # center 3d viewer on the segmentation surface
+  t=slicer.app.layoutManager().threeDWidget(0).threeDView().resetFocalPoint()
