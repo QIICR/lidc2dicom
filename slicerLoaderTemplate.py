@@ -20,7 +20,7 @@ class SlicerLIDCLoader():
   def __init__(self, tempDB=None):
     self.tempDICOMDB = tempDB
 
-  def loadSeries(self, seriesInstanceUID=None, modality=None):
+  def loadSeries(self, seriesInstanceUID=None, modality=None, seriesDescriptionPrefix=None):
     self._processData(seriesInstanceUIDToLoad=seriesInstanceUID,modalityToLoad=modality)
 
   def importDirectory(self, inputDir):
@@ -31,7 +31,7 @@ class SlicerLIDCLoader():
     self.indexer.addDirectory(self.dicomDatabase, inputDir)
     print('Import completed, total %s patients imported' % len(self.patients))
 
-  def _processData(self, seriesInstanceUIDToLoad=None, modalityToLoad=None):
+  def _processData(self, seriesInstanceUIDToLoad=None, modalityToLoad=None, seriesDescriptionPrefix=None):
     for patient in self.patients:
       print(patient)
       for study in self.dicomDatabase.studiesForPatient(patient):
@@ -45,15 +45,22 @@ class SlicerLIDCLoader():
 
           thisSeriesInstanceUID = self.dicomDatabase.fileValue(files[0], '0020,000e')
           seriesDescription = self.dicomDatabase.fileValue(files[0], '0008,103E')
+          print("Found series "+seriesDescription)
           modality = self.dicomDatabase.fileValue(files[0], '0008,0060')
 
-          print("This series: "+thisSeriesInstanceUID)
           if seriesInstanceUIDToLoad:
-            if thisSeriesInstanceUID != seriesInstanceUID:
+            if thisSeriesInstanceUID != seriesInstanceUIDToLoad:
+              print("Skipping because of series UID not matching "+seriesInstanceUIDToLoad)
               continue
 
           if modalityToLoad:
             if modality != modalityToLoad:
+              print("Skipping because of modality")
+              continue
+
+          if seriesDescriptionPrefix:
+            if not seriesDescription.startswith(seriesDescriptionPrefix):
+              print("Skipping series "+seriesDescription)
               continue
 
           print("Found series of modality "+modality)
@@ -110,6 +117,7 @@ class SlicerLIDCLoader():
       sn = snc.GetItemAsObject(snNumber)
       segmentation = sn.GetSegmentation()
       #displayNode = sn.GetDisplayNode()
+      segmentation.SetConversionParameter('Smoothing factor', '0.0')
       segmentation.CreateRepresentation(vtkSegConverter.GetSegmentationClosedSurfaceRepresentationName(), True)
       #displayNode.SetPreferredDisplayRepresentationName3D(vtkSegConverter.GetSegmentationClosedSurfaceRepresentationName())
 
@@ -127,21 +135,24 @@ class SlicerLIDCLoader():
 
 slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpView)
 
+# first two are required!
 CT_DICOM_PATH = "<CT_DICOM_PATH_PLACEHOLDER>"
 DERIVED_DICOM_PATH = "<DERIVED_DICOM_PATH_PLACEHOLDER>"
-SR_SERIES_UID = "<SR_SERIES_UID_PLACEHOLDER>"
+
+SR_SERIES_UID = <SR_SERIES_UID_PLACEHOLDER>
+SERIES_DESCRIPTION_PREFIX = <SERIES_DESCRIPTION_PREFIX_PLACEHOLDER>
 
 with TemporaryDICOMDatabase(os.path.join("/Users/fedorov/Temp/SlicerScripts", "CtkDICOMDatabase")) as db:
   srSeries = SR_SERIES_UID
   sl = SlicerLIDCLoader(tempDB=db)
   sl.importDirectory(CT_DICOM_PATH)
   sl.importDirectory(DERIVED_DICOM_PATH)
-  if srSeries is not None:
+  if srSeries is None:
     # load all SRs and corresponding SEG+CT
-    sl.loadSeries(modality="SR")
+    sl.loadSeries(modality="SR", seriesDescriptionPrefix=SERIES_DESCRIPTION_PREFIX)
   else:
     # load just one SR
-    sl.loadSeries(seriesInstanceUID=srSeries)
+    sl.loadSeries(seriesInstanceUID=srSeries, seriesDescriptionPrefix=SERIES_DESCRIPTION_PREFIX)
 
   # make all segmentations visible in slice viewers and 3d
   from QRCustomizations import CustomSegmentEditor
