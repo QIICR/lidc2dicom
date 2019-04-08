@@ -102,7 +102,6 @@ class SlicerLIDCLoader():
     from QRCustomizations import CustomSegmentEditor
     import vtkSegmentationCorePython
     vtkSegConverter = vtkSegmentationCorePython.vtkSegmentationConverter
-    sn = slicer.mrmlScene.GetFirstNodeByClass('vtkMRMLSegmentationNode')
     snc = slicer.mrmlScene.GetNodesByClass("vtkMRMLSegmentationNode")
     for snNumber in range(snc.GetNumberOfItems()):
 
