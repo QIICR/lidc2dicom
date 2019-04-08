@@ -142,20 +142,4 @@ with TemporaryDICOMDatabase(os.path.join("/Users/fedorov/Temp/SlicerScripts", "C
     sl.loadSeries(seriesInstanceUID=srSeries, seriesDescriptionPrefix=SERIES_DESCRIPTION_PREFIX)
 
   # make all segmentations visible in slice viewers and 3d
-  from QRCustomizations import CustomSegmentEditor
-  import vtkSegmentationCorePython
-  vtkSegConverter = vtkSegmentationCorePython.vtkSegmentationConverter
-  sn = slicer.mrmlScene.GetFirstNodeByClass('vtkMRMLSegmentationNode')
-  while sn:
-    segmentation = sn.GetSegmentation()
-    segmentation.CreateRepresentation(vtkSegConverter.GetSegmentationClosedSurfaceRepresentationName(), True)
-    csl=CustomSegmentEditor.CustomSegmentEditorLogic()
-    segmentNode = segmentation.GetNthSegment(0)
-    centroid = csl.getSegmentCentroid(sn, segmentNode)
-    markupsLogic = slicer.modules.markups.logic()
-    markupsLogic.JumpSlicesToLocation(centroid[0],centroid[1],centroid[2], True)
-
-    sn = slicer.mrmlScene.GetNextNodeByClass('vtkMRMLSegmentationNode')
-
-  # center 3d viewer on the segmentation surface
-  t=slicer.app.layoutManager().threeDWidget(0).threeDView().resetFocalPoint()
+  sl.showSegmentations()
