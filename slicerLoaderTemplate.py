@@ -18,9 +18,6 @@ class SlicerLIDCLoader():
   def __init__(self, tempDB=None):
     self.tempDICOMDB = tempDB
 
-  def loadSeries(self, seriesInstanceUID=None, modality=None, seriesDescriptionPrefix=None):
-    self._processData(seriesInstanceUIDToLoad=seriesInstanceUID,modalityToLoad=modality)
-
   def importDirectory(self, inputDir):
     print('Input directory: %s' % inputDir)
     self.indexer = getattr(self, "indexer", None)
@@ -29,7 +26,7 @@ class SlicerLIDCLoader():
     self.indexer.addDirectory(self.dicomDatabase, inputDir)
     print('Import completed, total %s patients imported' % len(self.patients))
 
-  def _processData(self, seriesInstanceUIDToLoad=None, modalityToLoad=None, seriesDescriptionPrefix=None):
+  def loadSeries(self, seriesInstanceUIDToLoad=None, modalityToLoad=None, seriesDescriptionPrefix=None):
     for patient in self.patients:
       print(patient)
       for study in self.dicomDatabase.studiesForPatient(patient):
@@ -136,10 +133,10 @@ with TemporaryDICOMDatabase(os.path.join("/Users/fedorov/Temp/SlicerScripts", "C
   sl.importDirectory(DERIVED_DICOM_PATH)
   if srSeries is None:
     # load all SRs and corresponding SEG+CT
-    sl.loadSeries(modality="SR", seriesDescriptionPrefix=SERIES_DESCRIPTION_PREFIX)
+    sl.loadSeries(modalityToLoad="SR", seriesDescriptionPrefix=SERIES_DESCRIPTION_PREFIX)
   else:
     # load just one SR
-    sl.loadSeries(seriesInstanceUID=srSeries, seriesDescriptionPrefix=SERIES_DESCRIPTION_PREFIX)
+    sl.loadSeries(seriesInstanceUIDToLoad=srSeries, seriesDescriptionPrefix=SERIES_DESCRIPTION_PREFIX)
 
   # make all segmentations visible in slice viewers and 3d
   sl.showSegmentations()
