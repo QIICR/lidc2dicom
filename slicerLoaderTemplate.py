@@ -31,6 +31,7 @@ class SlicerLIDCLoader():
       print(patient)
       for study in self.dicomDatabase.studiesForPatient(patient):
         #print self.dicomDatabase.seriesForStudy(study)
+
         series = self.dicomDatabase.seriesForStudy(study)
         for seriesIndex, currentSeries in enumerate(series, start=1):
           files = self.dicomDatabase.filesForSeries(currentSeries)
@@ -64,18 +65,6 @@ class SlicerLIDCLoader():
             plugin.load(loadable)
           elif modality == "SR":
             plugin, loadable = self._getPluginAndLoadableForFiles(seriesDescription, files, ["DICOMTID1500Plugin"])
-
-            if loadable.ReferencedOtherInstanceUIDs:
-              #print("Trying to load the CT")
-              #print(loadable.ReferencedOtherInstanceUIDs)
-
-              referencedFileList = []
-              for instance in loadable.ReferencedOtherInstanceUIDs:
-                referencedFileList.append(self.dicomDatabase.fileForInstance(instance))
-
-              ctPlugin, ctLoadable = self._getPluginAndLoadableForFiles(seriesDescription, referencedFileList, ["DICOMScalarVolumePlugin"])
-              print("CT loadable is "+str(ctLoadable))
-              ctPlugin.load(ctLoadable)
 
             plugin.load(loadable)
 
