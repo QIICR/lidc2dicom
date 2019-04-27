@@ -44,17 +44,17 @@ class SlicerLIDCLoader():
           print("Found series "+seriesDescription)
           modality = self.dicomDatabase.fileValue(files[0], '0008,0060')
 
-          if seriesInstanceUIDToLoad:
+          if seriesInstanceUIDToLoad and modality != "CT":
             if thisSeriesInstanceUID != seriesInstanceUIDToLoad:
               print("Skipping because of series UID not matching "+seriesInstanceUIDToLoad)
               continue
 
-          if modalityToLoad:
+          if modalityToLoad and modality != "CT":
             if modality != modalityToLoad:
               print("Skipping because of modality")
               continue
 
-          if seriesDescriptionPrefix:
+          if seriesDescriptionPrefix and modality != "CT":
             if not seriesDescription.startswith(seriesDescriptionPrefix):
               print("Skipping series "+seriesDescription)
               continue
