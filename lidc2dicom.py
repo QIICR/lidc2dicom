@@ -204,7 +204,7 @@ class LIDC2DICOMConverter:
     for scan in scans:
       studyUID = scan.study_instance_uid
       seriesUID = scan.series_instance_uid
-      seriesDir = os.path.join(self.rootDir,s,studyUID,seriesUID)
+      seriesDir = scan.get_path_to_dicom_files()
       if not os.path.exists(seriesDir):
         self.logger.error("Files not found for subject "+s)
         return
@@ -305,7 +305,7 @@ class LIDC2DICOMConverter:
     for scan in scans:
       studyUID = scan.study_instance_uid
       seriesUID = scan.series_instance_uid
-      seriesDir = os.path.join(self.rootDir,s,studyUID,seriesUID)
+      seriesDir = scan.get_path_to_dicom_files()
       if not os.path.exists(seriesDir):
         self.logger.error("Files not found for subject "+s)
         return
