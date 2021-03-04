@@ -6,7 +6,11 @@ XML representation of nodule annotations and characterizations into the DICOM
 Segmentation object (for annotations) and DICOM Structured Reporting objects
 (for nodule characterizations).
 
-See details in this paper:
+The results of conversion have been released in the [Standardized representation of the TCIA LIDC-IDRI annotations using DICOM](https://wiki.cancerimagingarchive.net/display/DOI/Standardized+representation+of+the+TCIA+LIDC-IDRI+annotations+using+DICOM) analysis results collections on The Cancer Imaging Archive (TCIA). 
+
+The code in this repository served its purpose, and as such, is being archived. It is shared with the community to accompany the publication below in the spirit of transparency. 
+
+You can learn about the details of conversion in this paper, which you are encouraged to cite if you use this code or the converted dataset in your work.
 
 > Fedorov, A., Hancock, M., Clunie, D., Brochhausen, M., Bona, J., Kirby, J., Freymann, J., Pieper, S., J W L Aerts, H., Kikinis, R. & Prior, F. DICOM re-encoding of volumetrically annotated Lung Imaging Database Consortium (LIDC) nodules. Med. Phys. (2020). doi:10.1002/mp.14445 http://dx.doi.org/10.1002/mp.14445
 
