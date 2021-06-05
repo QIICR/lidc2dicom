@@ -12,10 +12,11 @@ See details in this paper:
 
 A second script (`lidc2dicom_highdicom.py`) for the same task using pure-Python
 with the [highdicom](https://github.com/MGHComputationalPathology/highdicom)
-highdicom package was later added by Chris Bridge.
+package was later added by Chris Bridge.
 
 This project has been funded in part with federal funds from the National Cancer Institute, National Institutes of Health under Contract No. HHSN261200800001E, and by the NIH grants U24 CA180918 ([QIICR](http://qiicr.org)), U24 CA199460 and U01 CA190234. The content of this publication does not necessarily reflect the views or policies of the Department of Health and Human Services, nor does mention of trade names, commercial products, or organizations imply endorsement by the U.S. Government. Under this contract the University of Arkansas for Medical Sciences is funded by Leidos Biomedical Research subcontract 16X011.
 
 # Contact
 
 * Andrey Fedorov [@fedorov](https://fedorov.github.com)
+* Chris Bridge [@CPBridge](https://github.com/CPBridge) concerning the highdicom version of the script
