@@ -290,18 +290,18 @@ class LIDC2DICOMConverter:
                 # using pre-defined concepts in the concepts dictionary
                 concept_dict = self.concepts_dictionary[attribute]
                 name_code = CodedConcept(
-                    name=concept_dict['CodeMeaning'],
+                    meaning=concept_dict['CodeMeaning'],
                     value=concept_dict['CodeValue'],
-                    coding_scheme_designator=concept_dict['CodingSchemeDesignator']
+                    scheme_designator=concept_dict['CodingSchemeDesignator']
                 )
 
                 # A coded concept for the value of the evaluation
                 # using pre-defined concepts in the values dictionary
                 value_dict = self.values_dictionary[attribute][str(getattr(ann, attribute))]
                 value_code = CodedConcept(
-                    name=value_dict['CodeMeaning'],
+                    meaning=value_dict['CodeMeaning'],
                     value=value_dict['CodeValue'],
-                    coding_scheme_designator=value_dict['CodingSchemeDesignator']
+                    scheme_designator=value_dict['CodingSchemeDesignator']
                 )
 
                 # Make a evaluation object with this data
