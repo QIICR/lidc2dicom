@@ -286,11 +286,27 @@ class LIDC2DICOMConverter:
         qualitative_evaluations = []
         for attribute in self.concepts_dictionary.keys():
             try:
+                # A coded concept for the name of the evaluation
+                # using pre-defined concepts in the concepts dictionary
+                concept_dict = self.concepts_dictionary[attribute]
+                name_code = CodedConcept(
+                    name=concept_dict['CodeMeaning'],
+                    value=concept_dict['CodeValue'],
+                    coding_scheme_designator=concept_dict['CodingSchemeDesignator']
+                )
+
+                # A coded concept for the value of the evaluation
+                # using pre-defined concepts in the values dictionary
+                value_dict = self.values_dictionary[attribute][str(getattr(ann, attribute))]
+                value_code = CodedConcept(
+                    name=value_dict['CodeMeaning'],
+                    value=value_dict['CodeValue'],
+                    coding_scheme_designator=value_dict['CodingSchemeDesignator']
+                )
+
+                # Make a evaluation object with this data
                 qualitative_evaluations.append(
-                    QualitativeEvaluation(
-                        name=CodedConcept(**self.concepts_dictionary[attribute]),
-                        value=CodedConcept(**self.values_dictionary[attribute][str(getattr(ann, attribute))])
-                    )
+                    QualitativeEvaluation(name=name_code, value=value_code)
                 )
             except KeyError:
                 self.logger.info(f"Skipping invalid attribute: {attribute} {getattr(ann, attribute)}")
